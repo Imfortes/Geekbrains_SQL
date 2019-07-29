@@ -102,7 +102,7 @@ SELECT title AS город FROM cities WHERE cities.region_id=50
 
 
 #Создание таблицы отделы
-CREATE TABLE IF NOT EXISTS departments (
+CREATE TABLE IF NOT EXISTS deparments (
 	id INT(11) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
 	name VARCHAR(40) NOT NULL,
 	count INT(11) UNSIGNED DEFAULT 0,
@@ -114,13 +114,12 @@ ENGINE = InnoDB;
 
 #Создание таблицы штат
 CREATE TABLE IF NOT EXISTS staff(
-	id INT(11) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	id INT(11) UNSIGNED NOT NULL PRIMARY KEY,
 	title VARCHAR(25) NOT NULL,
-	name VARCHAR(25) NOT NULL,
 	last_name VARCHAR(30) NOT NULL,
 	department INT(11) UNSIGNED NOT NULL,
 	CONSTRAINT `id_department`
-		FOREIGN KEY (department) REFERENCES departments(id)
+		FOREIGN KEY (department) REFERENCES deparments(id)
 		ON DELETE CASCADE
 		ON UPDATE RESTRICT,
 	position VARCHAR(30),
@@ -183,12 +182,3 @@ SELECT department, COUNT(*) from staff GROUP BY department
 
 #Найти количество сотрудников в отделах и посмотреть, сколько всего денег получает отдел
 SELECT department AS Отдел, COUNT(*) AS Количество_сотрудников, SUM(salary) AS Сумма_выплат_по_отделу from staff GROUP BY department
-
-
-SELECT department, departments.title, AVG(salary) FROM staff
-LEFT JOIN departments ON staff.department = departments.id
-GROUP By department
-
-
-
-DELETE FROM staff WHERE id = (SELECT * FROM (SELECT id FROM staff WHERE salary = (SELECT MAX(salary) FROM staff) LIMIT 1) AS table1
