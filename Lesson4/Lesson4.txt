@@ -1,0 +1,200 @@
+CREATE DATABASE IF NOT EXISTS `geekbrains_lesson4` CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+#Создание таблицы даты
+CREATE TABLE IF NOT EXISTS dates (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    emp_id INT NOT NULL,
+    entrance DATE,
+    layoff DATE
+)
+DEFAULT CHAR SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+ENGINE = InnoDB
+
+#Создание таблицы отделы
+CREATE TABLE IF NOT EXISTS departments (
+	id INT(11) UNSIGNED NOT NULL PRIMARY KEY,
+	name VARCHAR(40) NOT NULL,
+	count INT(11) UNSIGNED DEFAULT 0,
+	head_id INT(11),
+    INDEX (name)
+)
+DEFAULT CHAR SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+ENGINE = InnoDB;
+
+#Создание таблицы штат
+CREATE TABLE IF NOT EXISTS staff(
+	id INT(11) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	title VARCHAR(25) NOT NULL,
+	name VARCHAR(25) NOT NULL,
+	last_name VARCHAR(30) NOT NULL,
+	department INT(11) UNSIGNED NOT NULL,
+	CONSTRAINT `id_department`
+		FOREIGN KEY (department) REFERENCES departments(id)
+		ON DELETE CASCADE
+		ON UPDATE RESTRICT,
+	position VARCHAR(30),
+	salary INT(11) UNSIGNED,
+    INDEX (salary)
+)
+DEFAULT CHAR SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+ENGINE = InnoDB;
+
+
+#Создание таблицы выплаты при вступление
+CREATE TABLE IF NOT EXISTS SALARY(
+	id INT(11) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	name VARCHAR(25) NOT NULL,
+	last_name VARCHAR(30) NOT NULL,
+	depart INT(11) UNSIGNED NOT NULL,
+	CONSTRAINT `id_depart`
+		FOREIGN KEY (depart) REFERENCES departments(id)
+		ON DELETE CASCADE
+		ON UPDATE RESTRICT,
+	salary INT(11) UNSIGNED,
+	INDEX (salary)
+)
+DEFAULT CHAR SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+ENGINE = InnoDB;
+
+INSERT INTO departments(name, count)
+	VALUES("Администрация", 2),
+	      ("Отдел кадров", 1),
+	      ("Бухгалтерия", 2),
+	      ("Юридический отдел", 1),
+ 	      ("IT отдел", 3),
+	      ("Отдел маркетинга", 1),
+	      ("Отдел продаж", 2),
+	      ("Охрана", 2);
+
+INSERT INTO staff (name, last_name, department, position, salary)
+	VALUES("Иван", "Мартынов", 1, "Генеральный директор", 110000),
+	      ("Петр", "Гришин", 1, "Финансовый директор", 105000),
+	      ("Андрей", "Меркушев", 2, "Руководитель отдела кадров", 95000),
+	      ("Ольга", "Богданова", 3, "Главный бухгалтер", 90000),
+	      ("Оксана", "Никонова", 3, "Бухгалтер", 50000),
+	      ("Елена", "Чернова", 4, "Юрист", 60000),
+	      ("Глория", "Кириллова", 5, "Верстальщик", 50000),
+	      ("Петр", "Громов", 5, "Фронтэнд программист", 80000),
+	      ("Кирилл", "Евсеев", 5, "Бэкэнд программист", 80000),
+	      ("Дмитрий", "Сорокин", 6, "Маркетолог", 60000),
+	      ("Яна", "Щербакова", 7, "Менеджер по продажам", 50000),
+	      ("Кристина", "Доронина", 7, "Менеджер по продажам", 50000),
+	      ("Арсений", "Голубев", 8, "Начальник охраны", 80000),
+	      ("Самуил", "Бобырев", 8, "Охранник", 40000);
+
+INSERT INTO dates (entrance, emp_id) SELECT CURDATE(), id from staff;
+
+SELECT staff.name, last_name, position, salary, departments.name, dates.entrance, dates.layoff FROM staff
+LEFT JOIN departments ON staff.department = departments.id
+LEFT JOIN dates ON staff.id = dates.emp_id;
+
+SELECT staff.name AS 'Имя', staff.last_name AS 'Фамилия', position AS 'Должность', salary AS 'Зарплата', departments.name AS 'Отдел', dates.entrance, dates.layoff FROM staff
+LEFT JOIN departments ON staff.department = departments.id
+LEFT JOIN dates ON staff.id = dates.emp_id
+
+SELECT CONCAT(staff.name,' ', staff.last_name) AS 'ФИО', position AS 'Должность', salary AS 'Зарплата', departments.name AS 'Отдел', dates.entrance, dates.layoff FROM staff
+LEFT JOIN departments ON staff.department = departments.id
+LEFT JOIN dates ON staff.id = dates.emp_id
+
+#CREATE VIEW - представление
+CREATE VIEW emp1 AS
+SELECT name, last_name, department, position FROM staff;
+
+SELECT * FROM emp1;
+SELECT name, last_name FROM emp1 WHERE department = 1;
+
+UPDATE emp1 SET department = 3 WHERE name = 'Арсений';
+
+CREATE VIEW emp2 AS
+SELECT CONCAT(staff.name,' ', staff.last_name) AS 'ФИО', position AS 'Должность', salary AS 'Зарплата', departments.name AS 'Отдел', dates.entrance, dates.layoff FROM staff
+LEFT JOIN departments ON staff.department = departments.id
+LEFT JOIN dates ON staff.id = dates.emp_id;
+
+SELECT * FROM emp2;
+
+DELIMITER $$
+
+CREATE PROCEDURE proc1 (depname VARCHAR(40))
+	BEGIN
+    	SET @x = (SELECT id from departments WHERE name LIKE depname);
+        SELECT * FROM staff WHERE department = @x;
+    END$$    
+    
+DELIMITER ;
+
+
+CREATE FUNCTION fun1 (dep_id INT)
+RETURNS INT DETERMINISTIC
+READS SQL DATA
+RETURN(SELECT COUNT(*) FROM departments WHERE id = dep_id);
+
+
+CREATE TRIGGER trig1
+	AFTER INSERT ON staff
+    FOR EACH ROW
+    INSERT INTO dates (emp_id, entrance) VALUES(NEW.id, CURDATE());
+
+INSERT INTO staff (name, last_name, department, position, salary)
+	VALUES("Николай", "Макуев", 4, "Юрист", 55000),
+    	  ("Артем", "Петров", 5, "Тестировщик", 60000);
+
+CREATE TRIGGER trig2
+BEFORE DELETE ON staff
+FOR EACH ROW
+UPDATE dates SET layoff = CURDATE() WHERE emp_id = OLD.id;
+
+DELETE FROM staff WHERE name = 'Артем'
+
+
+##################################### 
+#Homework
+
+CREATE TRIGGER trig3
+    AFTER INSERT ON staff
+    FOR EACH ROW
+    INSERT INTO salary (name, last_name, salary) VALUES(NEW.name, NEW.last_name, salary)
+
+
+INSERT INTO staff (name, last_name, department, position, salary)
+	VALUES("Николай", "Макуев", 4, "Помошник юриста", 40000)
+    	  
+#Создать VIEW на основе запросов, которые вы сделали в ДЗ к уроку 3.
+CREATE VIEW emp3 AS
+SELECT CONCAT(name, " ", last_name), department, salary from staff WHERE salary <= (SELECT AVG(salary) FROM staff)
+
+SELECT * FROM emp3
+
+CREATE VIEW emp4 AS
+SELECT department AS Отдел, COUNT(*) AS Количество_сотрудников, SUM(salary) AS Сумма_выплат_по_отделу from staff GROUP BY department
+
+SELECT * FROM emp4
+
+CREATE DEFINER=`root`@`localhost` 
+FUNCTION `func2`(`fio` VARCHAR(40) CHARSET utf8mb4) 
+RETURNS VARCHAR(40) CHARSET utf8mb4 DETERMINISTIC NO SQL SQL SECURITY DEFINER 
+RETURN(SELECT CONCAT(name, ' ', last_name) FROM staff WHERE fio = last_name)
+
+DROP FUNCTION `func2`; 
+CREATE DEFINER=`root`@`localhost` 
+FUNCTION `func2`(`fio` VARCHAR(40)) 
+RETURNS VARCHAR(40) DETERMINISTIC READS SQL DATA SQL SECURITY DEFINER 
+RETURN(SELECT CONCAT(name, ' ', last_name) FROM staff WHERE fio = last_name);
+
+SELECT func2 ('Меркушев');
+
+DROP TRIGGER IF EXISTS `trig3`;
+CREATE DEFINER=`root`@`localhost` 
+TRIGGER `trig3` AFTER INSERT ON `staff` 
+FOR EACH ROW 
+INSERT INTO salary (name, last_name, salary) 
+VALUES(NEW.name, NEW.last_name, salary);
+
+INSERT INTO staff (name, last_name, department, position, salary)
+	VALUES("Петр", "Кузнецов", 1, "Заместитель генерального директора", 85000)
+
+!!!
+INSERT INTO staff (name, last_name, department, position, salary)
+	VALUES("Петр", "Кузнецов", 1, "Заместитель генерального директора", 85000)
+
+Ответ MySQL: Документация
+#1452 - Cannot add or update a child row: a foreign key constraint fails (`geekbrains_lesson4`.`salary`, CONSTRAINT `id_depart` FOREIGN KEY (`depart`) REFERENCES `departments` (`id`) ON DELETE CASCADE)

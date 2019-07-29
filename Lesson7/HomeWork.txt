@@ -1,0 +1,100 @@
+cp -r /var/lib/mongodb /var/mongo_backup/back_`date '+%Y.%m.%d'`
+
+mongodump --db gb_lesson6 --out /var/mongo_backup/back_`date '+%Y.%m.%d'`
+
+use gb_lesson6
+db.gb_lesson6.drop()
+exit
+
+mongorestore --db gb_lesson6 /var/mongo_backup/back_2019.07.24/gb_lesson6
+mongo
+show dbs
+#
+admin       0.000GB
+config      0.000GB
+gb_lesson6  0.000GB
+local       0.000GB
+testtest    0.000GB
+
+
+mysql -u root -p123123
+show databases
++--------------------+
+| Database           |
++--------------------+
+| geekbrains_lesson6 |
+| information_schema |
+| mysql              |
+| performance_schema |
+| phpmyadmin         |
+| sys                |
++--------------------+
+
+
+mysqldump -u root -p123123 geekbrains_lesson6 --routines > /var/mysql_backup/back_`date '+%Y.%m.%d'`.sql;
+drop schema geekbrains_lesson6;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| phpmyadmin         |
+| sys                |
++--------------------+
+exit;
+create schema geekbrains_lesson6;
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| geekbrains_lesson6 |
+| information_schema |
+| mysql              |
+| performance_schema |
+| phpmyadmin         |
+| sys                |
++--------------------+
+
+mysql -u root -p123123 geekbrains_lesson6 < /var/mysql_backup/back_2019.07.24.sql;
+use geekbrains_lesson6;
+show tables;
++------------------------------+
+| Tables_in_geekbrains_lesson6 |
++------------------------------+
+| dates                        |
+| departments                  |
+| salary                       |
+| staff                        |
+| table1                       |
++------------------------------+
+
+
+
+CREATE USER IF NOT EXISTS 'big'@'%' IDENTIFIED WITH mysql_native_password BY '123123';
+GRANT ALL PRIVILEGES ON *.* TO 'big'@'%' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+quit;
+mysql -u big -p123123;
+SHOW SCHEMAS;
+use geekbrains_lesson6;
+SELECT * FROM `staff`;
+
+SELECT `user`,`host` FROM `mysql`.`user`;
+
+CREATE USER 'small'@'localhost' IDENTIFIED WITH mysql_native_password BY '123123' PASSWORD EXPIRE INTERVAL 14 DAY;
+GRANT SELECT, DELETE ON 'geekbrains_lesson6'.'staff' TO 'small'@'localhost';
+FLUSH PRIVILEGES;
+SHOW GRANTS FOR 'root'@'%';
+
+
+SHOW GRANTS FOR 'big'@'%';
+Grants for big@%
+| GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, RELOAD, SHUTDOWN, PROCESS, FILE, REFERENCES, INDEX, ALTER, SHOW DATABASES, SUPER, CREATE TEMPORARY TABLES, LOCK TABLES, EXECUTE, REPLICATION SLAVE, REPLICATION CLIENT, CREATE VIEW, SHOW VIEW, CREATE ROUTINE, ALTER ROUTINE, CREATE USER, EVENT, TRIGGER, CREATE TABLESPACE, CREATE ROLE, DROP ROLE ON *.* TO `big`@`%` WITH GRANT OPTION |
+| GRANT BACKUP_ADMIN,BINLOG_ADMIN,CONNECTION_ADMIN,ENCRYPTION_KEY_ADMIN,GROUP_REPLICATION_ADMIN,PERSIST_RO_VARIABLES_ADMIN,REPLICATION_SLAVE_ADMIN,RESOURCE_GROUP_ADMIN,RESOURCE_GROUP_USER,ROLE_ADMIN,SET_USER_ID,SYSTEM_VARIABLES_ADMIN,XA_RECOVER_ADMIN ON *.* TO `big`@`%` WITH GRANT OPTION    
+
+SHOW GRANTS FOR 'small'@'localhost';
+
+REVEOKE DELETE ON `geebrains_lesson6`.`staff` FROM 'small'@'localhost';
+FLUSH PRIVILEGES;
+SHOW GRANTS FOR 'small'@'localhost';

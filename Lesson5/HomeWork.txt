@@ -1,0 +1,144 @@
+CREATE DATABASE IF NOT EXISTS `geekbrains_lesson5` CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+#Создание таблицы даты
+CREATE TABLE IF NOT EXISTS dates (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    emp_id INT NOT NULL,
+    entrance DATE,
+    layoff DATE
+)
+DEFAULT CHAR SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS departments (
+	id INT(11) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	name VARCHAR(40) NOT NULL,
+	count INT(11) UNSIGNED DEFAULT 0,
+	head_id INT(11),
+    INDEX (name)
+)
+DEFAULT CHAR SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+ENGINE = InnoDB;
+
+#Создание таблицы штат
+CREATE TABLE IF NOT EXISTS staff(
+	id INT(11) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	title VARCHAR(25) NOT NULL,
+	name VARCHAR(25) NOT NULL,
+	last_name VARCHAR(30) NOT NULL,
+	department INT(11) UNSIGNED NOT NULL,
+	CONSTRAINT `id_department`
+		FOREIGN KEY (department) REFERENCES departments(id)
+		ON DELETE CASCADE
+		ON UPDATE RESTRICT,
+	position VARCHAR(30),
+	salary INT(11) UNSIGNED,
+    INDEX (salary)
+)
+DEFAULT CHAR SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+ENGINE = InnoDB;
+
+
+#Создание таблицы выплаты при вступление
+CREATE TABLE IF NOT EXISTS salary(
+	id INT(11) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+	emp_id INT(11) NOT NULL,
+	paydate DATE,
+	payoff INT(11)
+)
+DEFAULT CHAR SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+ENGINE = InnoDB;
+
+INSERT INTO departments(name, count)
+	VALUES("Администрация", 2),
+	      ("Отдел кадров", 1),
+	      ("Бухгалтерия", 2),
+	      ("Юридический отдел", 1),
+ 	      ("IT отдел", 3),
+	      ("Отдел маркетинга", 1),
+	      ("Отдел продаж", 2),
+	      ("Охрана", 2);
+
+INSERT INTO staff (name, last_name, department, position, salary)
+	VALUES("Иван", "Мартынов", 1, "Генеральный директор", 110000),
+	      ("Петр", "Гришин", 1, "Финансовый директор", 105000),
+	      ("Андрей", "Меркушев", 2, "Руководитель отдела кадров", 95000),
+	      ("Ольга", "Богданова", 3, "Главный бухгалтер", 90000),
+	      ("Оксана", "Никонова", 3, "Бухгалтер", 50000),
+	      ("Елена", "Чернова", 4, "Юрист", 60000),
+	      ("Глория", "Кириллова", 5, "Верстальщик", 50000),
+	      ("Петр", "Громов", 5, "Фронтэнд программист", 80000),
+	      ("Кирилл", "Евсеев", 5, "Бэкэнд программист", 80000),
+	      ("Дмитрий", "Сорокин", 6, "Маркетолог", 60000),
+	      ("Яна", "Щербакова", 7, "Менеджер по продажам", 50000),
+	      ("Кристина", "Доронина", 7, "Менеджер по продажам", 50000),
+	      ("Арсений", "Голубев", 8, "Начальник охраны", 80000),
+	      ("Самуил", "Бобырев", 8, "Охранник", 40000);
+
+
+DELIMITER $$
+CREATE TRIGGER `bonus`
+	AFTER INSERT ON `staff`
+	FOR EACH ROW
+BEGIN
+	INSERT INTO `salary` (`emp_id`, `paydate`, `payoff`) VALUES (NEW.id, CURDATE(), NEW.salary/2);
+	UPDATE `departments` SET `count` = `count` + 1 WHERE `departments`.`id` = NEW.`name`;
+END$$
+
+DELIMITER ;
+
+
+INSERT INTO staff (name, last_name, department, position, salary)
+	VALUES("Валентин", "Горохов", 5, "Тестировщик", 60000),
+	      ("Ирина", "Штейн", 6, "Маркетолог", 60000);
+
+
+BEGIN;
+	SET @a := (SELECT AVG(salary) FROM staff);
+	SET @b := (SELECT MIN(salary) FROM staff);
+	SET @c := (SELECT id FROM staff WHERE salary = @b);
+	INSERT INTO salary (emp_id, paydate, payoff)
+		VALUES(@c, CURDATE(), @a - @b);
+COMMIT;
+
+SELECT * FROM salary;
+
+BEGIN;
+	SET @maxSalary := (SELECT MAX(salary) FROM staff);
+	DELETE FROM staff
+	WHERE salary = @maxSalary;
+COMMIT;
+
+SELECT * FROM staff;
+
+#Операция удаления не будет влиять на таблицу
+BEGIN;
+	DELETE FROM staff
+	WHERE salary = 40000;
+ROLLBACK;
+
+SELECT * FROM staff;
+
+SAVEPOINT sp1;
+DELETE FROM staff WHERE salary = 100000;
+SAVEPOINT sp2;
+DELETE FROM staff WHERE salary = 40000;
+SAVEPOINT sp3;
+DELETE FROM staff WHERE salary = 60000;
+ROLLBACK TO sp1;
+
+EXPLAIN staff;
+EXPLAIN EXTENDED SELECT name FROM staff WHERE last_name = 'Евсеев';
+
+CREATE INDEX fullname ON staff (last_name, name);
+EXPLAIN EXTENDED SELECT name FROM staff WHERE last_name = 'Мартынов';
+
+SHOW INDEX FROM staff;
+
+EXPLAIN EXTENDED SELECT * FROM staff WHERE id = 11;
+
+EXPLAIN EXTENDED SELECT department, departments.name, AVG(salary) FROM staff
+LEFT JOIN departments ON staff.department = departments.id
+WHERE department = 'Администрация';
+
+SHOW WARNINGS;

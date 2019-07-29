@@ -1,0 +1,157 @@
+CREATE DATABASE [IF NOT EXISTS] db_name
+
+CREATE DATABASE IF NOT EXISTS `geekbrains_lesson2` CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+DROP DATABASE IF EXISTS `db_name`
+
+USE `geekbrains_lesson2`;
+
+
+CREATE TABLE IF NOT EXISTS `departments` (
+	 `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY, 
+	 `name` VARCHAR(40),
+	 `count` INT UNSIGNED DEFAULT 0,
+	 `head_id` INT 
+);
+
+
+
+CREATE TABLE IF NOT EXISTS `staff` (
+	 `id` INT NOT NULL AUTO_INCREMENT, 
+	 `name` VARCHAR(25) NOT NULL,
+     `lastname` VARCHAR(30) NOT NULL,
+     `department` INT,
+     `salary` INT,
+     PRIMARY KEY (`id`),
+     INDEX (`salary`)
+)
+DEFAULT CHAR SET utf8mb4 COLLATE utf8mb4_unicode_ci
+;
+
+
+ALTER SCHEMA `geekbrains_lesson2` DEFAULT CHAR SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+
+ALTER TABLE `staff`
+	ADD COLUMN `father_name` VARCHAR(45) AFTER `lastname`;
+
+
+ALTER TABLE `staff`
+	RENAME COLUMN `lastname` TO `surname`,
+        ADD UNIQUE INDEX `fio`(`name`, `father_name`, `surname`);
+
+ALTER TABLE `staff`
+	CHANGE COLUMN `lastname`, TO `surname`,
+        ADD UNIQUE INDEX `fio`(`name`, `father_name`, `surname`);
+    
+ALTER TABLE `staff`
+	AUTO_INCREMENT=444;
+    
+ALTER TABLE `staff`
+	CONVERT TO CHAR SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+
+ALTER TABLE `staff`
+	 ADD CONSTRAINT `dep_sotr` FOREIGN KEY (`department`)
+    	 REFERENCES `departments`(`id)
+   	 ON UPDATE CASCADE
+   	 ON DELETE RESTRICT;
+
+CREATE INDEX `depname` ON `departments`(`name`);
+
+ALTER TABLE `departments` DROP COLUMN `count`;
+
+TRUNCATE TABLE `departments`;
+
+
+
+
+
+
+ALTER TABLE `_regions`
+	CHANGE COLUMN `id-region` `id` INT(11) NOT NULL,
+    CHANGE COLUMN `title-region-ru` `title` VARCHAR(150) NOT NULL, INDEX,
+    CHANGE COLUMN `id-country` `country-id` INT(11) NOT NULL,
+    ADD CONSTRAINT `foreign-key` FOREIGN KEY (`country-id`)
+    REFERENCES `_countries` (`id`);
+
+
+
+
+/////////////////////////
+
+CREATE DATABASE IF NOT EXISTS `geekbrains_lesson2` 
+
+CREATE TABLE `_countries` (
+	`id-country` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+	`title-country-ru` VARCHAR(30) NOT NULL,
+	`title-country-en` VARCHAR(30) NOT NULL,
+	`title-capital` VARCHAR(30) NOT NULL
+) ENGINE = InnoDB;
+
+CREATE TABLE `_regions` (
+	`id-region` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+	`title-region-ru` VARCHAR(30) NOT NULL,
+	`title-region-en` VARCHAR(30) NOT NULL,
+	`id-country` INT(11) NOT NULL
+) ENGINE = InnoDB;
+
+CREATE TABLE `_cities` (
+	`id-city` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+	`title-city-ru` VARCHAR(30) NOT NULL,
+	`title-city-en` VARCHAR(30) NOT NULL,
+	`id-country` INT(11) NOT NULL,
+	`id-region` INT(11) NOT NULL
+) ENGINE = InnoDB;
+
+
+
+ALTER TABLE `_countries`
+    	DROP COLUMN `title-capital`,
+    	DROP COLUMN `title-country-en`;
+	
+INSERT INTO `_countries`
+	VALUES(643, 'Россия');
+
+ALTER TABLE `_countries` 
+CHANGE COLUMN `id-country` `id` INT(11),
+CHANGE COLUMN `title-country-ru` `title` VARCHAR(150) NOT NULL;
+
+
+
+ALTER TABLE `_regions`
+	DROP COLUMN `title-region-en`;
+
+ALTER TABLE `_regions` 
+	CHANGE COLUMN `id-region` `id` INT(11) NOT NULL, 
+	CHANGE COLUMN `title-region-ru` `title` VARCHAR(150) NOT NULL, 
+	CHANGE COLUMN `id-country` `country-id` INT(11) NOT NULL; 
+
+ALTER TABLE `_regions`
+	ADD CONSTRAINT `countryId` FOREIGN KEY (`country-id`)
+        REFERENCES `_countries`(`id`)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT;
+
+
+ALTER TABLE `_cities`
+	DROP COLUMN `title-city-en`,
+	ADD COLUMN `important` TINYINT(1) NOT NULL;
+
+ALTER TABLE `_cities`
+	CHANGE COLUMN `id-city` `id` INT(11) NOT NULL AUTO_INCREMENT,
+        CHANGE COLUMN `id-country` `country-id` INT(11) NOT NULL,
+        CHANGE COLUMN `id-region` `region-id` INT(11) NOT NULL,
+        CHANGE COLUMN `title-city-ru` `title` VARCHAR(150) NOT NULL;
+
+ALTER TABLE `_cities` 
+	ADD CONSTRAINT `country-Id` FOREIGN KEY (`country-id`) 
+	REFERENCES `_countries`(`id`) 
+	ON UPDATE CASCADE 
+	ON DELETE RESTRICT; 
+
+ALTER TABLE `_cities` 
+	ADD CONSTRAINT `region-Id` FOREIGN KEY (`region-id`) 
+	REFERENCES `_regions`(`id`) 
+	ON UPDATE CASCADE 
+	ON DELETE RESTRICT;

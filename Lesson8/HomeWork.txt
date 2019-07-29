@@ -1,0 +1,110 @@
+#PostgreSQL
+
+CREATE TABLE holiday_picnic (  
+     holiday varchar(50), -- строковое значение
+     sandwich text[], -- массив
+     side text[] [], -- многомерный массив
+     dessert text ARRAY, -- массив
+     beverage text ARRAY[4] -- массив из 4-х элементов
+);
+ -- вставляем значения массивов в таблицу
+INSERT INTO holiday_picnic VALUES  
+     ('Labor Day',
+     '{"roast beef","veggie","turkey"}',
+     '{
+        {"potato salad","green salad"},
+        {"chips","crackers"}
+     }',
+     '{"fruit cocktail","berry pie","ice cream"}',
+     '{"soda","juice","beer","water"}'
+);
+
+CREATE TABLE trails (  
+     trail_name varchar(250),
+     trail_path path
+);
+ -- вставляем тропу в таблицу,
+ -- для которой маршрут определяется координатами в формате широта-долгота
+INSERT INTO trails VALUES  
+     ('Dool Trail - Creeping Forest Trail Loop',
+     '((37.172,-122.22261666667),
+     (37.171616666667,-122.22385),
+     (37.1735,-122.2236),
+     (37.175416666667,-122.223),
+     (37.1758,-122.22378333333),
+     (37.179466666667,-122.22866666667),
+     (37.18395,-122.22675),
+     (37.180783333333,-122.22466666667),
+     (37.176116666667,-122.2222),
+     (37.1753,-122.22293333333),
+     (37.173116666667,-122.22281666667))'
+);
+
+CREATE TYPE liketype as (
+	liker_id INT,
+	liked_id INT,
+	obj_id INT	
+);
+
+CREATE TABLE likes(
+	id serial,
+	likes liketype,
+	likeadate date
+);
+
+INSERT INTO likes (likes, likedate) VALUES
+(ROW(1,2,1), '2017-02-08'),
+(ROW(1,2,2), '2017-02-08'),
+(ROW(1,2,3), '2017-02-08'),
+(ROW(2,2,1), '2017-02-08'),
+(ROW(2,1,2), '2017-02-08'),
+(ROW(1,2,2), '2017-02-08');
+
+SELECT (likes).liked_id FROM likes WHERE (likes).liker_id = 1;
+
+CREATE INDEX like_idx ON likes(likes) WHERE (likes).liker_id = 1;
+
+
+
+#Redis
+
+apt-get install redis-server
+redis-cli
+
+
+# STRING
+set july:1:string hello
+get july:1:string // hello
+ttl july:1:string
+expire july:1:string 300
+tll july:1:string // 260
+strlen july:1:string
+append july:1:string ", World"
+strlen july:1:string
+get july:1:string // hello, World
+getrange july:1:string 7 11 // World
+setrange july:1:string 7 "Alexander"
+get july:1:string // nil
+set july:1:string "hello, world!" EX 200
+setrange july:1:string 7 "Alexander"
+expire july:1:string 300
+tlle july:1:string
+get july:1:string
+
+#INTEGER
+set july:2:int 123 EX 888
+get july:2:int
+ttl july:2:int
+incr july:2:int
+decr july:2:int
+decrby july:2:int 20
+incrby july:2:int 40
+
+# TRANSACTION
+
+multi
+set july:3:int 555 EX 100
+expire july:3:int 222
+incrby july:3:int 111
+exec
+get july:3:int

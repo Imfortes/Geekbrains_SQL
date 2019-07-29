@@ -1,0 +1,194 @@
+CREATE DATABASE IF NOT EXISTS `geekbrains_lesson3` CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+#Создание таблицы страны
+CREATE TABLE IF NOT EXISTS countries (
+	id INT(11) UNSIGNED NOT NULL PRIMARY KEY,
+	title VARCHAR(150) UNIQUE NOT NULL,
+    INDEX (title)
+)
+DEFAULT CHAR SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+ENGINE = InnoDB;
+
+#Создание таблицы регионы
+CREATE TABLE IF NOT EXISTS regions (
+	id INT(11) UNSIGNED NOT NULL PRIMARY KEY,
+	title VARCHAR(150) UNIQUE NOT NULL,
+	country_id INT(11) UNSIGNED NOT NULL,
+	CONSTRAINT `id_country`
+		FOREIGN KEY (country_id) REFERENCES countries(id)
+		ON DELETE CASCADE
+		ON UPDATE RESTRICT,
+    INDEX (title)
+)
+DEFAULT CHAR SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+ENGINE = InnoDB;
+
+#Создание таблицы города
+CREATE TABLE IF NOT EXISTS cities (
+	id INT(11) UNSIGNED NOT NULL PRIMARY KEY,
+	country_id INT(11) UNSIGNED NOT NULL,
+	CONSTRAINT `id_country_city`
+		FOREIGN KEY (country_id) REFERENCES countries (id)
+		ON DELETE CASCADE
+		ON UPDATE RESTRICT,
+    important TINYINT(1) NOT NULL,
+    region_id INT(11) UNSIGNED NOT NULL,
+    CONSTRAINT `id_country_region`
+		FOREIGN KEY (region_id) REFERENCES regions (id)
+		ON DELETE CASCADE
+		ON UPDATE RESTRICT,
+    
+    title VARCHAR(150) UNIQUE NOT NULL,
+    INDEX (title)
+)
+DEFAULT CHAR SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+ENGINE = InnoDB;
+
+#Добавление стран/областей/городов
+INSERT INTO countries(id, title)
+	VALUES(643, "Россия"),
+    	  (840, "Соединенные Штаты Америки"),
+          (392, "Япония"),
+          (156, "Китай");
+          
+INSERT INTO regions(id, title, country_id)
+	VALUES(50, "Московская область", 643),
+	      (33, "Владимирская область", 643),
+	      (19, "Кентукки", 840),
+	      (31, "Флорида", 840),
+	      (38, "Канзас", 840),
+	      (2, "Тохоку", 392),
+	      (3, "Канто", 392),
+	      (16, "Цинхай", 156),
+	      (10, "Хубэй", 156);
+
+INSERT INTO cities(title, region_id, country_id)
+	VALUES("Балашиха", 50, 643),
+	      ("Апрелевка", 50, 643),
+	      ("Волоколамск", 50, 643),
+  	      ("Владимир", 33, 643),
+	      ("Ковров", 33, 643),
+	      ("Лакинск", 33, 643),
+	      ("Ковингтон", 19, 840),
+ 	      ("Лексингтон", 19, 840),
+	      ("Форт-Томас", 19, 840),
+	      ("Майями", 31, 840),
+	      ("Орландо", 31, 840),
+	      ("Манхэттен", 38, 840),
+	      ("Лоренс", 38, 840),
+	      ("Фукусима", 2, 392),
+	      ("Ивате", 2, 392),
+	      ("Токио", 3, 392),
+	      ("Канагава", 3, 392),
+	      ("Хайдун", 16, 156),
+	      ("Синин", 16, 156),
+	      ("Чэндэ", 10, 156),
+	      ("Таншань", 10, 156);
+	
+#Сделать запрос, в котором мы выберем все данные о городе – регион, страна     
+SELECT * FROM cities WHERE title = "Волоколамск";
+SELECT * FROM cities WHERE title = "Балашиха";
+SELECT * FROM cities WHERE title = "Фукусима";
+SELECT * FROM cities WHERE title = "Майями";
+SELECT * FROM cities WHERE title = "Таншань";
+SELECT * FROM cities WHERE title = "Токио";
+
+#Выбрать все города из Московской области
+SELECT title AS город FROM cities WHERE cities.region_id=50
+
+
+##########################################################################
+
+
+
+#Создание таблицы отделы
+CREATE TABLE IF NOT EXISTS departments (
+	id INT(11) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+	name VARCHAR(40) NOT NULL,
+	count INT(11) UNSIGNED DEFAULT 0,
+	head_id INT(11),
+    INDEX (name)
+)
+DEFAULT CHAR SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+ENGINE = InnoDB;
+
+#Создание таблицы штат
+CREATE TABLE IF NOT EXISTS staff(
+	id INT(11) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	title VARCHAR(25) NOT NULL,
+	name VARCHAR(25) NOT NULL,
+	last_name VARCHAR(30) NOT NULL,
+	department INT(11) UNSIGNED NOT NULL,
+	CONSTRAINT `id_department`
+		FOREIGN KEY (department) REFERENCES departments(id)
+		ON DELETE CASCADE
+		ON UPDATE RESTRICT,
+	position VARCHAR(30),
+	salary INT(11) UNSIGNED,
+    INDEX (salary)
+)
+DEFAULT CHAR SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+ENGINE = InnoDB;
+
+INSERT INTO departments(name)
+	VALUES("Администрация"),
+	      ("Отдел кадров"),
+	      ("Бухгалтерия"),
+	      ("Юридический отдел"),
+ 	      ("IT отдел"),
+	      ("Отдел маркетинга"),
+	      ("Отдел продаж"),
+	      ("Охрана");
+
+INSERT INTO staff (name, last_name, department, position, salary)
+	VALUES("Иван", "Мартынов", 1, "Генеральный директор", 110000),
+	      ("Петр", "Гришин", 1, "Финансовый директор", 105000),
+	      ("Андрей", "Меркушев", 2, "Руководитель отдела кадров", 95000),
+	      ("Ольга", "Богданова", 3, "Главный бухгалтер", 90000),
+	      ("Оксана", "Никонова", 3, "Бухгалтер", 50000),
+	      ("Елена", "Чернова", 4, "Юрист", 60000),
+	      ("Глория", "Кириллова", 5, "Верстальщик", 50000),
+	      ("Петр", "Громов", 5, "Фронтэнд программист", 80000),
+	      ("Кирилл", "Евсеев", 5, "Бэкэнд программист", 80000),
+	      ("Дмитрий", "Сорокин", 6, "Маркетолог", 60000),
+	      ("Яна", "Щербакова", 7, "Менеджер по продажам", 50000),
+	      ("Кристина", "Доронина", 7, "Менеджер по продажам", 50000),
+	      ("Арсений", "Голубев", 8, "Начальник охраны", 80000),
+	      ("Самуил", "Бобырев", 8, "Охранник", 40000);
+
+
+SELECT CONCAT(name, " ", last_name), department, salary FROM staff ORDER BY department;
+SELECT CONCAT(name, " ",last_name), department FROM staff LEFT JOIN departments ON ( staff.department = departments.id ) ORDER BY department;
+
+
+#Выбрать среднюю зарплату по отделам
+SELECT department, AVG(salary) FROM staff GROUP BY department
+SELECT CONCAT(name, " ", last_name), department, salary from staff WHERE salary <= (SELECT AVG(salary) FROM staff)
+
+#Выбрать максимальную зарплату по отделам
+SELECT department, MAX(salary) FROM staff  GROUP BY department
+
+#Выбрать максимальную зарплату у сотрудника
+SELECT MAX(salary), CONCAT(name, " ", last_name),department FROM staff
+DELETE FROM staff WHERE salary = MAX(salary)
+
+#Выбрать вторую после максимальной зарплаты
+SELECT MAX(salary) from staff WHERE salary NOT IN (select MAX(salary) from staff)
+
+#Удалить одного сотрудника, у которого максимальная зарплата
+DELETE FROM staff WHERE salary = (SELECT MAX(salary) FROM staff)
+
+#Посчитать количество сотрудников во всех отделах
+SELECT department, COUNT(*) from staff GROUP BY department
+
+#Найти количество сотрудников в отделах и посмотреть, сколько всего денег получает отдел
+SELECT department AS Отдел, COUNT(*) AS Количество_сотрудников, SUM(salary) AS Сумма_выплат_по_отделу from staff GROUP BY department
+
+
+SELECT department, departments.title, AVG(salary) FROM staff
+LEFT JOIN departments ON staff.department = departments.id
+GROUP By department
+
+
+
+DELETE FROM staff WHERE id = (SELECT * FROM (SELECT id FROM staff WHERE salary = (SELECT MAX(salary) FROM staff) LIMIT 1) AS table1

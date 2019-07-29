@@ -1,0 +1,271 @@
+#Master Server
+
+[mysqld]
+server-id = 1
+log_bin = /var/log/mysql/bin.log
+binlog_do_db = lesson6
+
+service mysql restart;
+mysql -u root -p123123;
+
+GRANT REPLICATION SLAVE ON *.* To 'root'@'%';
+FLUSH PRIVILEGES;
+
+SHOW MASTER STATUS;
++------------+----------+--------------------+------------------+-------------------+
+| File       | Position | Binlog_Do_DB       | Binlog_Ignore_DB | Executed_Gtid_Set |
++------------+----------+--------------------+------------------+-------------------+
+| bin.000021 |      538 | lesson6,sotrudniki |                  |                   |
++------------+----------+--------------------+------------------+-------------------+
+1 row in set (0,00 sec)
+
+mysqldump -u root -p geekbrains_lesson6 --routines > /var/master2107.sql;
+mysqldump -u root -p lesson6 --routines > /var/master2208.sql;
+
+
+
+
+#Slave Server
+
+[mysqld]
+server-id = 2
+log_bin = bin.log
+binlog_do_db = lesson6
+relay-log - /var/log/mysql/relay.log
+
+
+CHANGE MASTER TO MASTER_HOST='192.168.0.195', MASTER_USER='root', MASTER_PASSWORD='123123', MASTER_LOG_FILE='bin.000021', MASTER_LOG_POS=538;
+
+SHOW SLAVE STATUS \G;
+START SLAVE;
+
+*************************** 1. row ***************************
+               Slave_IO_State: Waiting for master to send event
+                  Master_Host: 192.168.0.195
+                  Master_User: root
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: bin.000022
+          Read_Master_Log_Pos: 155
+               Relay_Log_File: relay.000005
+                Relay_Log_Pos: 357
+        Relay_Master_Log_File: bin.000022
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+              Replicate_Do_DB: 
+          Replicate_Ignore_DB: 
+           Replicate_Do_Table: 
+       Replicate_Ignore_Table: 
+      Replicate_Wild_Do_Table: 
+  Replicate_Wild_Ignore_Table: 
+                   Last_Errno: 0
+                   Last_Error: 
+                 Skip_Counter: 0
+          Exec_Master_Log_Pos: 155
+              Relay_Log_Space: 1482
+              Until_Condition: None
+               Until_Log_File: 
+                Until_Log_Pos: 0
+           Master_SSL_Allowed: No
+           Master_SSL_CA_File: 
+           Master_SSL_CA_Path: 
+              Master_SSL_Cert: 
+            Master_SSL_Cipher: 
+               Master_SSL_Key: 
+        Seconds_Behind_Master: 0
+Master_SSL_Verify_Server_Cert: No
+                Last_IO_Errno: 0
+                Last_IO_Error: 
+               Last_SQL_Errno: 0
+               Last_SQL_Error: 
+  Replicate_Ignore_Server_Ids: 
+             Master_Server_Id: 111
+                  Master_UUID: 3a90a3b6-f1ab-11e8-8365-080027ad0e39
+             Master_Info_File: mysql.slave_master_info
+                    SQL_Delay: 0
+          SQL_Remaining_Delay: NULL
+      Slave_SQL_Running_State: Slave has read all relay log; waiting for more updates
+           Master_Retry_Count: 86400
+                  Master_Bind: 
+      Last_IO_Error_Timestamp: 
+     Last_SQL_Error_Timestamp: 
+               Master_SSL_Crl: 
+           Master_SSL_Crlpath: 
+           Retrieved_Gtid_Set: 
+            Executed_Gtid_Set: 
+                Auto_Position: 0
+         Replicate_Rewrite_DB: 
+                 Channel_Name: 
+           Master_TLS_Version: 
+       Master_public_key_path: 
+        Get_master_public_key: 0
+1 row in set (0,00 sec)
+
+
+
+#ON_Master
+DELETE FROM geekbrains_lesson6.staff WHERE id = 16;
+SELECT * FROM  geekbrains_lesson6.staff;
+
+CREATE TABLE IF NOT EXISTS table1 LIKE staff;
+
+
+#MONGODB
+service mongod restart;
+mongo;
+
+show dbs
+
+use gb_lesson6
+db.gb_lesson6.insert({"name":"Alexander"})
+
+db.gb_lesson6.find()
+{ "_id" : ObjectId("5d34ab52beb6e24fca12c914"), "name" : "Alexander" }
+
+db.gb_lesson6.insert({"name":"Ivan", "lastname":"Martinov", "department":"administration", "salary":110000})
+db.gb_lesson6.insert({"name":"Petr", "lastname":"Grishin", "department":"administration", "salary":105000})
+db.gb_lesson6.insert({"name":"Kirill", "lastname":"Evseev", "department":"IT", "salary":80000})
+db.gb_lesson6.find()
+
+db.gb_lesson6.find().pretty()
+db.gb_lesson6.find({"name":"Ivan"}).pretty()
+
+db.gb_lesson6.find({"salary":{$gt:70000}}).pretty()
+
+db.gb_lesson6.find({"salary":{$exists:true}})
+
+db.gb_lesson6.find({"salary":{$in:[60000, 100000, 110000]}}).pretty()
+
+db.gb_lesson6.find({"name":{$regex:"^I"}}).pretty()
+
+db.gb_lesson6.update({"name":"Ivan"},{$set:{"position":"Big Boss"}})
+
+######################################DATABASE FOR LESSON6#####################################
+
+CREATE DATABASE IF NOT EXISTS `geekbrains_lesson5` CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+#Создание таблицы даты
+CREATE TABLE IF NOT EXISTS dates (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    emp_id INT NOT NULL,
+    entrance DATE,
+    layoff DATE
+)
+DEFAULT CHAR SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS departments (
+	id INT(11) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	name VARCHAR(40) NOT NULL,
+	count INT(11) UNSIGNED DEFAULT 0,
+	head_id INT(11),
+    INDEX (name)
+)
+DEFAULT CHAR SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+ENGINE = InnoDB;
+
+#Создание таблицы штат
+CREATE TABLE IF NOT EXISTS staff(
+	id INT(11) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	name VARCHAR(25) NOT NULL,
+	last_name VARCHAR(30) NOT NULL,
+	department INT(11) UNSIGNED NOT NULL,
+	CONSTRAINT `id_department`
+		FOREIGN KEY (department) REFERENCES departments(id)
+		ON DELETE CASCADE
+		ON UPDATE RESTRICT,
+	position VARCHAR(30),
+	salary INT(11) UNSIGNED,
+    INDEX (salary)
+)
+DEFAULT CHAR SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+ENGINE = InnoDB;
+
+
+#Создание таблицы выплаты при вступление
+CREATE TABLE IF NOT EXISTS salary(
+	id INT(11) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+	emp_id INT(11) NOT NULL,
+	paydate DATE,
+	payoff INT(11)
+)
+DEFAULT CHAR SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+ENGINE = InnoDB;
+
+INSERT INTO departments(name, count)
+	VALUES("Администрация", 2),
+	      ("Отдел кадров", 1),
+	      ("Бухгалтерия", 2),
+	      ("Юридический отдел", 1),
+ 	      ("IT отдел", 3),
+	      ("Отдел маркетинга", 1),
+	      ("Отдел продаж", 2),
+	      ("Охрана", 2);
+
+INSERT INTO staff (name, last_name, department, position, salary)
+	VALUES("Иван", "Мартынов", 1, "Генеральный директор", 110000),
+	      ("Петр", "Гришин", 1, "Финансовый директор", 105000),
+	      ("Андрей", "Меркушев", 2, "Руководитель отдела кадров", 95000),
+	      ("Ольга", "Богданова", 3, "Главный бухгалтер", 90000),
+	      ("Оксана", "Никонова", 3, "Бухгалтер", 50000),
+	      ("Елена", "Чернова", 4, "Юрист", 60000),
+	      ("Глория", "Кириллова", 5, "Верстальщик", 50000),
+	      ("Петр", "Громов", 5, "Фронтэнд программист", 80000),
+	      ("Кирилл", "Евсеев", 5, "Бэкэнд программист", 80000),
+	      ("Дмитрий", "Сорокин", 6, "Маркетолог", 60000),
+	      ("Яна", "Щербакова", 7, "Менеджер по продажам", 50000),
+	      ("Кристина", "Доронина", 7, "Менеджер по продажам", 50000),
+	      ("Арсений", "Голубев", 8, "Начальник охраны", 80000),
+	      ("Самуил", "Бобырев", 8, "Охранник", 40000);
+
+
+DELIMITER $$
+CREATE TRIGGER `bonus`
+	AFTER INSERT ON `staff`
+	FOR EACH ROW
+BEGIN
+	INSERT INTO `salary` (`emp_id`, `paydate`, `payoff`) VALUES (NEW.id, CURDATE(), NEW.salary/2);
+	UPDATE `departments` SET `count` = `count` + 1 WHERE `departments`.`id` = NEW.`name`;
+END$$
+
+DELIMITER ;
+
+
+INSERT INTO staff (name, last_name, department, position, salary)
+	VALUES("Валентин", "Горохов", 5, "Тестировщик", 60000),
+	      ("Ирина", "Штейн", 6, "Маркетолог", 60000);
+
+
+BEGIN;
+	SET @a := (SELECT AVG(salary) FROM staff);
+	SET @b := (SELECT MIN(salary) FROM staff);
+	SET @c := (SELECT id FROM staff WHERE salary = @b);
+	INSERT INTO salary (emp_id, paydate, payoff)
+		VALUES(@c, CURDATE(), @a - @b);
+COMMIT;
+
+SELECT * FROM salary;
+
+BEGIN;
+	SET @maxSalary := (SELECT MAX(salary) FROM staff);
+	DELETE FROM staff
+	WHERE salary = @maxSalary;
+COMMIT;
+
+SELECT * FROM staff;
+
+EXPLAIN staff;
+EXPLAIN EXTENDED SELECT name FROM staff WHERE last_name = 'Евсеев';
+
+CREATE INDEX fullname ON staff (last_name, name);
+EXPLAIN EXTENDED SELECT name FROM staff WHERE last_name = 'Мартынов';
+
+SHOW INDEX FROM staff;
+
+EXPLAIN EXTENDED SELECT * FROM staff WHERE id = 11;
+
+EXPLAIN EXTENDED SELECT department, departments.name, AVG(salary) FROM staff
+LEFT JOIN departments ON staff.department = departments.id
+WHERE department = 'Администрация';
+
+SHOW WARNINGS;
